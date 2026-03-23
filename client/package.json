@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "ag-grid-community": "^35.1.0",
+    "ag-grid-react": "^35.1.0",
     "axios": "^1.13.2",
     "lucide-react": "^0.577.0",
     "prop-types": "^15.8.1",
@@ -18,7 +20,8 @@
     "react-router-dom": "^7.9.6",
     "react-slick": "^0.31.0",
     "slick-carousel": "^1.8.1",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

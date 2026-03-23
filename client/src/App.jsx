@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Header from './Components/Header';
 import SemiFooter from './Components/SemiFooter';
 import ChatWidget from './Components/ChatWidget';
@@ -37,14 +37,51 @@ import Loader from './Components/Loader';
 import ScrollToTop from './Components/ScrollToTop';
 import ScrollToTopButton from './Components/ScrollToTopButton';
 
-function App() {
+// Admin imports
+import AdminLayout from './admin/layouts/AdminLayout';
+import AdminLogin from './admin/pages/Login';
+import Dashboard from './admin/pages/Dashboard';
+import CreateAdmin from './admin/pages/CreateAdmin';
+import Memberships from './admin/pages/Memberships';
+import LiveChat from './admin/pages/LiveChat';
+import ChatHistory from './admin/pages/ChatHistory';
+import ChatSettings from './admin/pages/ChatSettings';
+import EmailTemplates from './admin/pages/EmailTemplates';
+
+const ClientLayout = () => {
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
       <ScrollToTopButton />
       <Header />
       <Suspense fallback={<Loader />}>
-        <Routes>
+        <Outlet />
+      </Suspense>
+      <ChatWidget />
+      <SemiFooter />
+    </>
+  );
+};
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="create-admin" element={<CreateAdmin />} />
+          <Route path="memberships" element={<Memberships />} />
+          <Route path="email-templates" element={<EmailTemplates />} />
+          <Route path="live-chat" element={<LiveChat />} />
+          <Route path="chat-history" element={<ChatHistory />} />
+          <Route path="chat-settings" element={<ChatSettings />} />
+        </Route>
+
+        {/* Client Routes */}
+        <Route element={<ClientLayout />}>
           <Route path="/" index element={<Home />} />
           <Route path="/about/semi" element={<AboutSEMI />} />
           <Route path="/about/mission-vision" element={<OurMission />} />
@@ -79,10 +116,8 @@ function App() {
 
           {/* 404 - Not Found */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-      <ChatWidget />
-      <SemiFooter />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }
