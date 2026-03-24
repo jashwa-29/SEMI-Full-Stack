@@ -10,10 +10,9 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 
 // Load environment variables
-dotenv.config();     
+dotenv.config();
 
-// Import DB connection if needed (Target uses inline mongoose.connect)
-// Import Error Handler (Target has errorMiddleware.js)
+// Import Error Handler
 const errorHandler = require("./middleware/errorMiddleware");
 
 // Import Socket Logic
@@ -21,7 +20,7 @@ const socketHandler = require("./socket");
 const { startChatCleanupTask } = require("./utils/chatCleanup");
 
 const app = express();
-const server = http.createServer(app); // Create HTTP server for Socket.io
+const server = http.createServer(app);
 
 // --- CORS Configuration ---
 const allowedOrigins = [
@@ -32,32 +31,57 @@ const allowedOrigins = [
   "https://semi.org.in",
   "https://backend.semi.org.in",
 ];
-   
+
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else { 
-      try {   
-        const hostname = new URL(origin).hostname;
-        if (hostname === "semi.org.in" || hostname.endsWith(".semi.org.in")) {
-          return callback(null, true);
-        }
-      } catch (err) {}
-      callback(new Error("Not allowed by CORS"));
+    if (!origin) return callback(null, true);
+
+    try {
+      const hostname = new URL(origin).hostname;
+
+      if (
+        hostname === "semi.org.in" ||
+        hostname === "www.semi.org.in" ||
+        hostname.endsWith(".semi.org.in") ||
+        hostname.includes("localhost")
+      ) {
+        return callback(null, true);
+      }
+    } catch (err) {
+      return callback(null, false);
     }
+
+    callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
 };
-  
+
+// ✅ Enable CORS
 app.use(cors(corsOptions));
 
+// ✅ Handle Preflight Requests (CRITICAL FIX)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://www.semi.org.in");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, Content-Type, Accept, Authorization"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 // --- Security Middleware ---
-app.use( 
+app.use(
   helmet({
     crossOriginResourcePolicy: false,
     crossOriginEmbedderPolicy: false,
-  }),
+  })
 );
 
 // --- Logging ---
@@ -82,7 +106,7 @@ const io = new Server(server, {
 // Run Socket Logic
 socketHandler(io);
 
-// Start Automated Chat Cleanup (Closes chats inactive > 24h)
+// Start Automated Chat Cleanup
 startChatCleanupTask(io);
 
 // --- MongoDB Connection ---
@@ -101,27 +125,26 @@ app.get("/api/health", (req, res) => {
     success: true,
     status: "UP",
     uptime: process.uptime(),
-    dbStatus: mongoose.connection.readyState === 1 ? "CONNECTED" : "DISCONNECTED",
-    timestamp: new Date()
+    dbStatus:
+      mongoose.connection.readyState === 1 ? "CONNECTED" : "DISCONNECTED",
+    timestamp: new Date(),
   });
 });
 
 // --- Routes ---
-// New features from reference
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/chats", require("./routes/chatRoutes"));
 app.use("/api/chat-settings", require("./routes/chatSettingRoutes"));
 
-// Existing features  
 app.use("/api/membership", require("./routes/membershipRoutes"));
 app.use("/api/newsletter", require("./routes/newsletterRoutes"));
 app.use("/api/contact", require("./routes/contactRoutes"));
 app.use("/api/templates", require("./routes/emailTemplateRoutes"));
 
-// Serve static files from uploads folder
+// --- Static Files ---
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-  
-// --- 404 Not Found Handler ---
+
+// --- 404 Handler ---
 app.use((req, res, next) => {
   const error = new Error("Route not found");
   error.statusCode = 404;
@@ -135,14 +158,14 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(
-    `🚀 Server running in ${process.env.NODE_ENV || "production"} mode on port ${PORT}`
-      .yellow.bold,
+    `🚀 Server running in ${
+      process.env.NODE_ENV || "production"
+    } mode on port ${PORT}`.yellow.bold
   );
 });
 
-// Handle unhandled promise rejections
-process.on("unhandledRejection", (err, promise) => {
+// --- Handle unhandled promise rejections ---
+process.on("unhandledRejection", (err) => {
   console.log(`Error: ${err.message}`.red);
-  // Close server & exit process
   server.close(() => process.exit(1));
 });
