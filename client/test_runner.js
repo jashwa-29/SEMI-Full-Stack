@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://backend.semi.org.in");
 const visitorId = "test_visitor_" + Date.now();
 
 let output = [];

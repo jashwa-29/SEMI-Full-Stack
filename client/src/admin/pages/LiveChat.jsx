@@ -4,7 +4,7 @@ import { User, MessageCircle, Send, Clock, CheckCircle, AlertCircle, Loader2, Vo
 import Toast from "../components/Toast";
 import Modal from "../components/Modal";
 
-const SOCKET_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+const SOCKET_URL = (import.meta.env.VITE_API_BASE_URL || 'https://backend.semi.org.in/api').replace(/\/$/, '');
 
 // --- Typing Indicator Component ---
 const TypingIndicator = ({ name = 'Visitor' }) => (

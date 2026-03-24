@@ -31,10 +31,7 @@ const Header = ({ onMenuToggle }) => {
       </div>
 
       <div className="flex items-center gap-3">
-        <button className="relative h-9 w-9 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 transition-colors">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white" />
-        </button>
+ 
         <div className="flex items-center gap-2.5 pl-3 border-l border-gray-100">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-gray-900 leading-tight">{user.email?.split('@')[0] || 'Admin'}</p>

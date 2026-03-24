@@ -157,12 +157,16 @@ const Dashboard = () => {
       {/* Primary Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Total Members', val: stats.totalMembers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-          { label: 'Pending Approvals', val: stats.pendingMembers, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+          { label: 'Total Members', val: stats.totalMembers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', path: '/admin/memberships' },
+          { label: 'Pending Approvals', val: stats.pendingMembers, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', path: '/admin/memberships' },
           { label: 'Newsletter Subs', val: stats.totalSubs, icon: Mail, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-          { label: 'Chat History', val: stats.activeChats, icon: MessageSquare, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+          { label: 'Chat History', val: stats.activeChats, icon: MessageSquare, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', path: '/admin/chat-history' },
         ].map((stat, i) => (
-          <div key={i} className={`p-6 rounded-3xl bg-white border ${stat.border} shadow-sm hover:shadow-md transition-all group cursor-default`}>
+          <div 
+            key={i} 
+            onClick={() => stat.path && navigate(stat.path)}
+            className={`p-6 rounded-3xl bg-white border ${stat.border} shadow-sm hover:shadow-md transition-all group ${stat.path ? 'cursor-pointer hover:border-primary-200' : 'cursor-default'}`}
+          >
             <div className="flex justify-between items-start mb-4">
               <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
                 <stat.icon className="h-6 w-6" />
@@ -187,7 +191,7 @@ const Dashboard = () => {
                 <h2 className="text-xl font-bold text-gray-900">Recent Applications</h2>
               </div>
               <button 
-                onClick={() => navigate('/memberships')}
+                onClick={() => navigate('/admin/memberships')}
                 className="text-primary-600 font-bold text-xs uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all"
               >
                 View All <ChevronRight className="h-4 w-4" />
@@ -228,7 +232,7 @@ const Dashboard = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button 
-                          onClick={() => navigate('/memberships')}
+                          onClick={() => navigate('/admin/memberships')}
                           className="p-1 px-3 bg-gray-100 hover:bg-primary-600 hover:text-white rounded-lg transition-all text-xs font-bold text-gray-500 uppercase tracking-tighter"
                         >
                           Review
@@ -257,7 +261,7 @@ const Dashboard = () => {
                   <h2 className="text-xl font-bold text-gray-900">Admin Team</h2>
                 </div>
                 <button 
-                  onClick={() => navigate('/create-admin')}
+                  onClick={() => navigate('/admin/create-admin')}
                   className="p-2 bg-primary-100 text-primary-700 rounded-xl hover:bg-primary-600 hover:text-white transition-all shadow-sm"
                   title="Add Admin"
                 >

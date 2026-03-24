@@ -29,6 +29,8 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://www.semi.org.in",
   "https://semi.org.in",
+  "https://www.semi.swiflare.com",
+  "https://semi.swiflare.com",
   "https://backend.semi.org.in",
 ];
 
@@ -61,7 +63,21 @@ app.use(cors(corsOptions));
 
 // ✅ Handle Preflight Requests (CRITICAL FIX)
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://www.semi.org.in");
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else if (origin) {
+    // Check if it's a subdomain of semi.org.in
+    try {
+      const hostname = new URL(origin).hostname;
+      if (hostname === "semi.org.in" || hostname.endsWith(".semi.org.in")) {
+        res.header("Access-Control-Allow-Origin", origin);
+      }
+    } catch (err) {
+      // Invalid URL, skip
+    }
+  }
+
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
@@ -142,7 +158,7 @@ app.use("/api/contact", require("./routes/contactRoutes"));
 app.use("/api/templates", require("./routes/emailTemplateRoutes"));
 
 // --- Static Files ---
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static("/var/www/uploads"));
 
 // --- 404 Handler ---
 app.use((req, res, next) => {

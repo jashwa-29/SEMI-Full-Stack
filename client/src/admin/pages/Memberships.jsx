@@ -9,7 +9,7 @@ import {
 import Modal from '../components/Modal';
 import membershipService from '../services/membership.service';
 import templateService from '../services/template.service';
-const SERVER = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/api\/?$/, '');
+const SERVER = (import.meta.env.VITE_API_BASE_URL || 'https://backend.semi.org.in/api').replace(/\/api\/?$/, '');
 
 /* ─── Status config ─── */
 const statusCfg = {

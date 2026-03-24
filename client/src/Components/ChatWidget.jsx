@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
 import { MessageCircle, X, Send, User, Bot, Minus, Phone, Mail, UserCircle, Sparkles, RotateCcw, List } from 'lucide-react';
 
-const SOCKET_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/api\/?$/, '').replace(/\/$/, '');
+const SOCKET_URL = (import.meta.env.VITE_API_BASE_URL || 'https://backend.semi.org.in/api').replace(/\/api\/?$/, '').replace(/\/$/, '');
 
 // --- Typing Indicator Component ---
 const TypingIndicator = () => (

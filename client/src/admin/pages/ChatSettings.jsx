@@ -23,7 +23,7 @@ import {
 import Toast from '../components/Toast';
 import Modal from '../components/Modal';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://backend.semi.org.in/api').replace(/\/$/, '');
 
 const ChatSettings = () => {
   const [visitorFaqs, setVisitorFaqs] = useState([]);
