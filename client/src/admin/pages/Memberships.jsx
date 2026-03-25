@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
   Download, Trash2, Eye, RefreshCw, FileSpreadsheet,
-  AlertTriangle, Pencil, CheckCircle2, XCircle, Clock,
+  AlertTriangle, Pencil, CheckCircle2, XCircle, Clock, Layout, AlertCircle,
   Search, ChevronLeft, ChevronRight, ChevronsUpDown,
   ChevronUp, ChevronDown, SlidersHorizontal, X,
 } from 'lucide-react';
@@ -118,6 +118,10 @@ export default function Memberships() {
   const [delLoad,     setDelLoad]     = useState(false);
   const [approveLoad, setApproveLoad] = useState(false);
 
+  /* confirmation & success */
+  const [confirm, setConfirm] = useState(null); // { title: '', msg: '', onConfirm: () => {}, color: 'indigo', icon: Eye }
+  const [success, setSuccess] = useState(null); // { title: '', msg: '' }
+
   /* ── fetch ── */
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -220,28 +224,50 @@ export default function Memberships() {
         customMessage: approveForm.customMessage
       });
       setMembers(prev => prev.map(m => m._id === approveM._id ? response.data : m));
+      const memberName = approveM.fullName;
       setApproveM(null);
-      // Keep template selection but reset others? Or reset all.
       setApproveForm(p => ({ ...p, paymentLink: '', customMessage: '' }));
+      
+      // Show Success Celebration
+      setSuccess({
+        title: 'Application Approved!',
+        msg: `Membership for ${memberName} has been successfully approved. An automated payment link has been sent to their email.`
+      });
     } catch (e) {
-      alert(e.message || 'Approval failed.');
+      setEditErr(e.message || 'Approval failed.');
     } finally {
-      setApproveLoad(false);
+      setApproveLoad(true); // Keep button disabled during success
+      setTimeout(() => setApproveLoad(false), 500);
     }
   };
 
   /* ── status quick toggle ── */
   const updateStatus = async (id, newStatus) => {
-    try {
-      const response = await membershipService.update(id, { status: newStatus });
-      const updated = response.data;
-      setMembers(prev => prev.map(m => m._id === id ? updated : m));
-      // Update active modal states if they refer to this record
-      if (editM?._id === id) setEditForm(p => ({ ...p, status: updated.status }));
-      if (viewM?._id === id) setViewM(updated);
-    } catch (e) {
-      alert(e.message || 'Status update failed.');
-    }
+    const config = {
+      'on-review': { title: 'Move to Review', msg: 'This will update the internal status to Review. No email notification will be sent.', icon: Eye, color: 'indigo' },
+      'pending':   { title: 'Restore to Pending', msg: 'Are you sure you want to move this back to the initial screening stage?', icon: Clock, color: 'amber' },
+      'rejected':  { title: 'Reject Candidate', msg: 'This will mark the application as unsuccessful. This action is visible to the admin team.', icon: XCircle, color: 'red' }
+    };
+
+    const task = config[newStatus];
+    if (!task) return;
+
+    setConfirm({
+      ...task,
+      onConfirm: async () => {
+        try {
+          const response = await membershipService.update(id, { status: newStatus });
+          const updated = response.data;
+          setMembers(prev => prev.map(m => m._id === id ? updated : m));
+          if (editM?._id === id) setEditForm(p => ({ ...p, status: updated.status }));
+          if (viewM?._id === id) setViewM(updated);
+          setConfirm(null);
+          setSuccess({ title: 'Status Updated', msg: `Application status has been changed to ${updated.status}.` });
+        } catch (e) {
+          alert('Update failed: ' + e.message);
+        }
+      }
+    });
   };
 
   /* ── delete ── */
@@ -707,10 +733,71 @@ export default function Memberships() {
           </>
         }>
         {editErr && (
-          <div className="mb-4 flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm border border-red-100">
+          <div className="mb-6 flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm border border-red-100 animate-shake">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />{editErr}
           </div>
         )}
+
+        {/* ── Status Lifecycle Stepper ── */}
+        <div className="mb-8 px-2">
+          <div className="flex items-center justify-between relative mb-2">
+            {[
+              { id: 'pending',   label: 'Received',  icon: Clock,        color: 'amber' },
+              { id: 'on-review', label: 'In Review', icon: Eye,          color: 'indigo' },
+              { id: 'approved',  label: 'Approved',  icon: CheckCircle2, color: 'emerald' }
+            ].map((step, idx, arr) => {
+              const isPast = (step.id === 'pending' && editForm.status !== 'pending') || 
+                             (step.id === 'on-review' && (editForm.status === 'approved' || editForm.status === 'rejected'));
+              const isCurrent = editForm.status === step.id || (editForm.status === 'rejected' && step.id === 'on-review');
+              const isLast = idx === arr.length - 1;
+
+              return (
+                <React.Fragment key={step.id}>
+                  <div className="flex flex-col items-center gap-2 relative z-10">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 shadow-sm ${
+                      isPast ? `bg-${step.color}-500 border-${step.color}-600 text-white` :
+                      isCurrent ? `bg-white border-${step.color}-500 text-${step.color}-600 ring-4 ring-${step.color}-50` :
+                      'bg-gray-50 border-gray-200 text-gray-300'
+                    }`}>
+                      <step.icon className={`h-5 w-5 ${isCurrent ? 'animate-pulse' : ''}`} />
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isCurrent ? `text-${step.color}-600` : 'text-gray-400'}`}>
+                      {step.id === 'on-review' && editForm.status === 'rejected' ? 'Rejected' : step.label}
+                    </span>
+                  </div>
+                  {!isLast && (
+                    <div className="flex-1 h-[2px] mx-4 bg-gray-100 overflow-hidden relative top-[-10px]">
+                      <div className={`absolute inset-0 transition-transform duration-1000 origin-left ${
+                        isPast ? 'bg-emerald-500 translate-x-0' : 'translate-x-[-100%]'
+                      }`} />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+          
+          {/* Status Context Banner */}
+          <div className={`mt-4 p-3 rounded-xl border text-[11px] font-medium leading-relaxed flex items-center gap-3 transition-colors ${
+            editForm.status === 'pending' ? 'bg-amber-50 border-amber-100 text-amber-700' :
+            editForm.status === 'on-review' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' :
+            editForm.status === 'approved' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+            'bg-red-50 border-red-100 text-red-700'
+          }`}>
+            <div className={`h-6 w-6 rounded-lg flex items-center justify-center shrink-0 ${
+              editForm.status === 'pending' ? 'bg-amber-100' :
+              editForm.status === 'on-review' ? 'bg-indigo-100' :
+              editForm.status === 'approved' ? 'bg-emerald-100' :
+              'bg-red-100'
+            }`}>
+              <AlertCircle className="h-3.5 w-3.5" />
+            </div>
+            {editForm.status === 'pending' && "This application is currently waiting for initial screening. You can move it to 'Review' or proceed to 'Approval' directly."}
+            {editForm.status === 'on-review' && "This application is being reviewed. The candidate has not been notified of any changes yet."}
+            {editForm.status === 'approved' && "Application has been finalized and approved. An automated payment link was sent to the applicant."}
+            {editForm.status === 'rejected' && "This application was rejected. No automated emails are sent for rejections."}
+          </div>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { label: 'Full Name',      key: 'fullName' },
@@ -777,50 +864,79 @@ export default function Memberships() {
               className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all resize-none" />
           </div>
 
-          <div className="sm:col-span-2 border-t border-gray-100 pt-5 mt-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-2">Update Application Status</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-400">Current:</span>
-                  <StatusBadge status={editForm.status} />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {editForm.status !== 'on-review' && editForm.status !== 'approved' && (
-                  <button 
-                    type="button"
-                    onClick={() => editM && updateStatus(editM._id, 'on-review')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-all shadow-sm"
-                  >
-                    <Eye className="h-3.5 w-3.5" /> Send to Review
-                  </button>
-                )}
+          <div className="sm:col-span-2 border-t border-gray-100 pt-6 mt-4">
+            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+              <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Layout className="h-4 w-4 text-primary-500" />
+                Decision Center
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Approval Path */}
                 {editForm.status !== 'approved' && (
                   <button 
                     type="button"
                     onClick={() => editM && (setApproveM(editM), setEditM(null))}
-                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all shadow-sm"
+                    className="group relative flex flex-col p-4 bg-white border border-emerald-100 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all text-left"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Approve Flow
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="h-7 w-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900">Proceed to Approval</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium leading-normal pl-9">Finalize membership and send payment instructions via email.</p>
                   </button>
                 )}
+
+                {/* Review Path */}
+                {editForm.status !== 'on-review' && editForm.status !== 'approved' && (
+                  <button 
+                    type="button"
+                    onClick={() => editM && updateStatus(editM._id, 'on-review')}
+                    className="group relative flex flex-col p-4 bg-white border border-indigo-100 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all text-left"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="h-7 w-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <Eye className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900">Move to Review</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium leading-normal pl-9">Inform your team this application is currently being evaluated.</p>
+                  </button>
+                )}
+
+                {/* Rejection Path */}
                 {editForm.status !== 'rejected' && (
                   <button 
                     type="button"
                     onClick={() => editM && updateStatus(editM._id, 'rejected')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all shadow-sm"
+                    className="group relative flex flex-col p-4 bg-white border border-red-100 rounded-xl hover:border-red-300 hover:shadow-md transition-all text-left"
                   >
-                    <XCircle className="h-3.5 w-3.5" /> Reject
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="h-7 w-7 rounded-lg bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                        <XCircle className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900">Reject Candidate</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium leading-normal pl-9">Mark application as unsuccessful. No email will be sent.</p>
                   </button>
                 )}
+
+                {/* Reset Path */}
                 {(editForm.status === 'on-review' || editForm.status === 'rejected') && (
                   <button 
                     type="button"
                     onClick={() => editM && updateStatus(editM._id, 'pending')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-all shadow-sm"
+                    className="group relative flex flex-col p-4 bg-white border border-amber-100 rounded-xl hover:border-amber-300 hover:shadow-md transition-all text-left"
                   >
-                    <Clock className="h-3.5 w-3.5" /> Back to Pending
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="h-7 w-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                        <Clock className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900">Restore to Pending</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-medium leading-normal pl-9">Reset the application status to the initial screening phase.</p>
                   </button>
                 )}
               </div>
@@ -910,37 +1026,29 @@ export default function Memberships() {
       </Modal>
 
       {/* ══ DELETE MODAL ══ */}
-      <Modal isOpen={!!deleteM} onClose={() => setDeleteM(null)} title="Confirm Delete" size="sm"
+      <Modal isOpen={!!deleteM} onClose={() => setDeleteM(null)} title="Destructive Action" size="sm"
         footer={
           <>
-            <button onClick={() => setDeleteM(null)}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-              Cancel
-            </button>
+            <button onClick={() => setDeleteM(null)} className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancel</button>
             <button onClick={doDelete} disabled={delLoad}
-              className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60">
-              {delLoad && <div className="h-3.5 w-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-              Delete Permanently
+              className="px-5 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 active:scale-95 disabled:opacity-60">
+              Confirm Delete
             </button>
           </>
         }>
-        <div className="flex flex-col items-center text-center gap-4 py-3">
-          <div className="h-16 w-16 rounded-full bg-red-50 flex items-center justify-center border border-red-100">
-            <AlertTriangle className="h-8 w-8 text-red-500" />
-          </div>
-          <div>
-            <p className="text-base font-bold text-gray-900 mb-1">Are you sure?</p>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              You are about to permanently delete{' '}
-              <span className="font-semibold text-gray-800">{deleteM?.fullName}</span>'s
-              membership application along with all associated documents.
-              <span className="block mt-1 text-red-500 font-medium text-xs">This action cannot be undone.</span>
-            </p>
-          </div>
+        <div className="flex flex-col items-center text-center py-6 space-y-4">
+           <div className="h-16 w-16 rounded-3xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600">
+              <Trash2 className="h-8 w-8" />
+           </div>
+           <div>
+              <p className="text-base font-bold text-gray-900 mb-1">Delete Permanently?</p>
+              <p className="text-xs text-gray-500 leading-relaxed font-medium px-6">
+                Are you sure you want to permanently delete <span className="font-bold text-red-600">{deleteM?.fullName}</span>'s application? This action cannot be undone.
+              </p>
+           </div>
         </div>
       </Modal>
 
-      {/* ══ DOWNLOAD MODAL ══ */}
       <Modal isOpen={dlModal} onClose={() => setDlModal(false)} title="Export to Excel" size="sm">
         <div className="space-y-3 py-1">
           <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-100 mb-5">
@@ -963,6 +1071,50 @@ export default function Memberships() {
               <Download className="h-4 w-4 text-gray-300 group-hover:text-primary-500 flex-shrink-0 transition-colors" />
             </button>
           ))}
+        </div>
+      </Modal>
+
+      {/* ══ CONFIRMATION MODAL ══ */}
+      <Modal isOpen={!!confirm} onClose={() => setConfirm(null)} title={confirm?.title || 'Are you sure?'} size="sm" 
+        footer={
+          <>
+            <button onClick={() => setConfirm(null)} className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancel</button>
+            <button 
+              onClick={confirm?.onConfirm} 
+              className={`px-5 py-2 text-sm font-bold text-white rounded-xl shadow-lg transition-all active:scale-95 bg-${confirm?.color || 'primary'}-600 hover:bg-${confirm?.color || 'primary'}-700 shadow-${confirm?.color || 'primary'}-100`}
+            >
+              Confirm Action
+            </button>
+          </>
+        }>
+        <div className="flex flex-col items-center text-center py-4 space-y-4">
+           <div className={`h-16 w-16 rounded-3xl bg-${confirm?.color}-50 border border-${confirm?.color}-100 flex items-center justify-center text-${confirm?.color}-600`}>
+              {confirm?.icon && <confirm.icon className="h-8 w-8" />}
+           </div>
+           <div>
+              <p className="text-sm text-gray-500 leading-relaxed font-medium px-4">{confirm?.msg}</p>
+           </div>
+        </div>
+      </Modal>
+
+      {/* ══ SUCCESS CELEBRATION MODAL ══ */}
+      <Modal isOpen={!!success} onClose={() => setSuccess(null)} title="Success" size="sm" hideClose
+        footer={
+          <button onClick={() => setSuccess(null)} className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200">
+             Got it, thanks!
+          </button>
+        }>
+        <div className="flex flex-col items-center text-center py-6 space-y-4">
+           <div className="relative">
+              <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" />
+              <div className="relative h-20 w-20 rounded-full bg-emerald-100 border-4 border-white shadow-xl flex items-center justify-center text-emerald-600 z-10">
+                 <CheckCircle2 className="h-10 w-10 animate-bounce" />
+              </div>
+           </div>
+           <div>
+              <h3 className="text-xl font-black text-gray-900 mb-1">{success?.title}</h3>
+              <p className="text-xs text-gray-400 leading-relaxed font-medium px-6">{success?.msg}</p>
+           </div>
         </div>
       </Modal>
     </div>
