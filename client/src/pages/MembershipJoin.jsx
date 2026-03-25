@@ -47,6 +47,7 @@ const MembershipJoin = () => {
     pgDetails: '',
     mciFile: null,
     pgFile: null,
+    aadharFile: null,
     otherDocs: null,
     photograph: null,
     attestation: false
@@ -76,7 +77,7 @@ const MembershipJoin = () => {
     // Required fields check
     const requiredFields = [
       'fullName', 'designation', 'homeAddress', 'state', 
-      'mobilePhone', 'email', 'photograph', 'mciFile', 'pgFile', 'attestation'
+      'mobilePhone', 'email', 'photograph', 'mciFile', 'pgFile', 'aadharFile', 'attestation'
     ];
 
     if (requiredFields.includes(name) && !value) {
@@ -191,7 +192,7 @@ const MembershipJoin = () => {
       try {
         // Validate file sizes before submitting
         const invalidFiles = [];
-        ['photograph', 'mciFile', 'pgFile'].forEach((f) => {
+        ['photograph', 'mciFile', 'pgFile', 'aadharFile'].forEach((f) => {
           if (formData[f] && formData[f].size > MAX_FILE_SIZE) invalidFiles.push(f);
         });
         if (formData.otherDocs && formData.otherDocs.length > 0) {
@@ -222,6 +223,7 @@ const MembershipJoin = () => {
         if (formData.photograph) data.append('photograph', formData.photograph);
         if (formData.mciFile) data.append('mciFile', formData.mciFile);
         if (formData.pgFile) data.append('pgFile', formData.pgFile);
+        if (formData.aadharFile) data.append('aadharFile', formData.aadharFile);
         
         // Append multiple other docs
         if (formData.otherDocs && formData.otherDocs.length > 0) {
@@ -267,7 +269,7 @@ const MembershipJoin = () => {
         'date', 'photograph', 'fullName', 'designation', 'officeAddress', 
         'homeAddress', 'state', 'officePhone', 'mobilePhone', 'email',
         'qualificationType', 'mbbsCollege', 'otherDegree', 'pgDetails',
-        'mciFile', 'pgFile', 'otherDocs', 'attestation'
+        'mciFile', 'pgFile', 'aadharFile', 'otherDocs', 'attestation'
       ];
 
       const firstError = fieldOrder.find(field => currentErrors[field]);
@@ -606,6 +608,37 @@ const MembershipJoin = () => {
                           {errors.pgFile && <p className="text-red-500 text-[10px] font-bold mt-1 ml-1 flex items-center gap-1">
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                             {errors.pgFile}
+                          </p>}
+                        </div>
+
+                        {/* Aadhar Card */}
+                        <div className={`group relative transition-all duration-300 ${errors.aadharFile ? 'animate-shake' : ''}`}>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Aadhar Card *</label>
+                          <div className={`relative flex items-center justify-between px-4 py-3 bg-white border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                            formData.aadharFile 
+                              ? 'border-green-500 bg-green-50/30' 
+                              : errors.aadharFile 
+                              ? 'border-red-400 bg-red-50' 
+                              : 'border-gray-200 hover:border-blue-400 hover:shadow-md'
+                          }`}>
+                            <div className="flex items-center gap-3 truncate">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${formData.aadharFile ? 'bg-green-100 text-green-600' : 'bg-blue-50 text-blue-500'}`}>
+                                {formData.aadharFile ? (
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                ) : (
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
+                                )}
+                              </div>
+                              <span className={`text-sm truncate ${formData.aadharFile ? 'text-gray-900 font-bold' : 'text-gray-500 font-medium'}`}>
+                                {formData.aadharFile ? formData.aadharFile.name : "Upload Aadhar Card (Mandatory) *"}
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">Browse</span>
+                            <input type="file" name="aadharFile" onChange={handleChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                          </div>
+                          {errors.aadharFile && <p className="text-red-500 text-[10px] font-bold mt-1 ml-1 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                            {errors.aadharFile}
                           </p>}
                         </div>
 

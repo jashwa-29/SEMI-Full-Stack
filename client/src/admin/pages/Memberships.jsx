@@ -83,6 +83,7 @@ const EXCEL_FIELDS = [
   ['Other Degree',   m => m.otherDegree],
   ['PG Details',     m => m.pgDetails],
   ['Status',         m => m.status],
+  ['Aadhar Card',    m => m.aadharFile ? `${SERVER}/${m.aadharFile}` : ''],
   ['Applied On',     m => m.createdAt   ? new Date(m.createdAt).toLocaleDateString() : ''],
 ];
 
@@ -671,7 +672,7 @@ export default function Memberships() {
             <div>
               <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mb-3">Documents</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[{ label: 'MCI File', path: viewM.mciFile }, { label: 'PG File', path: viewM.pgFile }, { label: 'Photo', path: viewM.photograph }]
+                {[{ label: 'MCI File', path: viewM.mciFile }, { label: 'PG File', path: viewM.pgFile }, { label: 'Aadhar', path: viewM.aadharFile }, { label: 'Photo', path: viewM.photograph }]
                   .map(d => (
                     <div key={d.label} className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-center">
                       <p className="text-[10px] font-bold text-gray-400 mb-1.5 uppercase">{d.label}</p>
@@ -836,7 +837,7 @@ export default function Memberships() {
               className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
               Cancel
             </button>
-            <button onClick={doApprove} disabled={approveLoad || !approveForm.paymentLink}
+            <button onClick={doApprove} disabled={approveLoad || !approveForm.templateId}
               className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-60">
               {approveLoad && <div className="h-3.5 w-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
               Approve & Send Email
@@ -877,21 +878,23 @@ export default function Memberships() {
                 ))}
               </div>
               {approveForm.templateId && templates.find(t => t._id === approveForm.templateId) && (
-                <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
-                   <p className="text-[10px] text-gray-400 font-medium">Subject: <span className="text-gray-600 italic">"{templates.find(t => t._id === approveForm.templateId).subject}"</span></p>
+                <div className="mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Template Preview</p>
+                   <p className="text-xs text-gray-600 font-medium">Subject: <span className="text-gray-900 font-bold italic">"{templates.find(t => t._id === approveForm.templateId).subject}"</span></p>
+                   <div className="flex items-center gap-2 pt-1 border-t border-gray-200/50">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase">Payment Link:</span>
+                      {templates.find(t => t._id === approveForm.templateId).paymentLink ? (
+                        <span className="text-[10px] text-emerald-600 font-mono truncate max-w-[200px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">{templates.find(t => t._id === approveForm.templateId).paymentLink}</span>
+                      ) : (
+                        <span className="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded border border-red-100 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" /> No link pre-saved
+                        </span>
+                      )}
+                   </div>
                 </div>
               )}
             </div>
-            <div>
-              <label className="block text-[11px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Payment Link (Required)</label>
-              <input 
-                type="url" 
-                value={approveForm.paymentLink}
-                onChange={e => setApproveForm(p => ({ ...p, paymentLink: e.target.value }))}
-                placeholder="https://payment-link.com/..."
-                className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all font-mono" 
-              />
-            </div>
+
             <div>
               <label className="block text-[11px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Custom Message (Optional)</label>
               <textarea 

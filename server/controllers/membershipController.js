@@ -11,7 +11,7 @@ exports.createMembership = asyncHandler(async (req, res) => {
 
   // Map file paths to formData cleanly
   // Map file paths to formData cleanly
-  const fileFields = ['photograph', 'mciFile', 'pgFile', 'otherDocs'];
+  const fileFields = ['photograph', 'mciFile', 'pgFile', 'aadharFile', 'otherDocs'];
   fileFields.forEach(field => {
     if (files[field]) {
        if (field === 'otherDocs') {
@@ -244,7 +244,7 @@ exports.updateMembership = asyncHandler(async (req, res) => {
   const files = req.files || {};
 
   // Handle new file uploads and delete old ones
-  const fileFields = ['photograph', 'mciFile', 'pgFile', 'otherDocs'];
+  const fileFields = ['photograph', 'mciFile', 'pgFile', 'aadharFile', 'otherDocs'];
   fileFields.forEach(field => {
     if (files[field]) {
       // Delete old file
@@ -335,9 +335,10 @@ exports.updateMembership = asyncHandler(async (req, res) => {
           emailSubject = template.subject;
           
           // Replace tag with button html
+          const finalPaymentLink = template.paymentLink || paymentLink;
           const buttonHtml = `
             <center>
-              <a href="${paymentLink || '#'}" class="btn">Complete Membership Payment</a>
+              <a href="${finalPaymentLink || '#'}" class="btn">Complete Membership Payment</a>
             </center>
           `;
 
@@ -390,7 +391,7 @@ exports.deleteMembership = asyncHandler(async (req, res) => {
   }
 
   // Delete associated files
-  const filePaths = [membership.photograph, membership.mciFile, membership.pgFile, membership.otherDocs];
+  const filePaths = [membership.photograph, membership.mciFile, membership.pgFile, membership.aadharFile, membership.otherDocs];
   deleteFiles(filePaths);
 
   await membership.deleteOne();

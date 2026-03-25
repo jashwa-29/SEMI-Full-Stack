@@ -8,6 +8,7 @@ const uploadFields = [
   { name: 'photograph', maxCount: 1 },
   { name: 'mciFile', maxCount: 1 },
   { name: 'pgFile', maxCount: 1 },
+  { name: 'aadharFile', maxCount: 1 },
   { name: 'otherDocs', maxCount: 5 },
 ];
 

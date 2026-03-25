@@ -69,6 +69,10 @@ const membershipSchema = new mongoose.Schema({
     type: String, // Store file path
     required: true
   },
+  aadharFile: {
+    type: String, // Store file path
+    required: true
+  },
   status: {
     type: String,
     enum: ['pending', 'on-review', 'approved', 'rejected'],

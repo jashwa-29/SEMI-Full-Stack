@@ -14,6 +14,9 @@ const EmailTemplateSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  paymentLink: {
+    type: String
+  },
   isDefault: {
     type: Boolean,
     default: false
