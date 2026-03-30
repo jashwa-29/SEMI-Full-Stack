@@ -158,7 +158,7 @@ app.use("/api/contact", require("./routes/contactRoutes"));
 app.use("/api/templates", require("./routes/emailTemplateRoutes"));
 
 // --- Static Files ---
-app.use("/uploads", express.static("/var/www/uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // --- 404 Handler ---
 app.use((req, res, next) => {
