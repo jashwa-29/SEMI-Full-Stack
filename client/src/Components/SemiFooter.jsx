@@ -107,6 +107,8 @@ const SemiFooter = () => {
                     className="h-16 w-auto"
                     loading="lazy"
                     decoding="async"
+                    width="200"
+                    height="80"
                   />
                 </div>
                 <p className="text-gray-300 text-justify text-sm leading-relaxed text-center md:text-left mb-6">

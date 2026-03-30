@@ -143,7 +143,7 @@ PrevArrow.propTypes = {
 const HomeNewsEducationSection = () => {
   const settings = {
     dots: true,
-    infinite: true,
+    infinite: false,
     speed: 500,
     slidesToShow: 2,
     slidesToScroll: 1,
@@ -300,6 +300,7 @@ const HomeNewsEducationSection = () => {
                           <Link 
                             to={course.link} 
                             className="text-xs sm:text-sm font-semibold underline underline-offset-2 hover:no-underline self-start mt-auto inline-block text-white"
+                            aria-label={`Read More about ${course.title}`}
                           >
                             Read More
                           </Link>

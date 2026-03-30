@@ -57,7 +57,7 @@ const ClientLayout = () => {
       <Suspense fallback={<Loader />}>
         <Outlet />
       </Suspense>
-      <ChatWidget />
+      {/* <ChatWidget /> */}
       <SemiFooter />
     </>
   );

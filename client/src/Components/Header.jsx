@@ -144,6 +144,8 @@ const Header = () => {
                       loading="eager"
                       fetchPriority="high"
                       decoding="async"
+                      width="200"
+                      height="80"
                     />
                   </div>
                   <div className="ml-3 sm:ml-5">

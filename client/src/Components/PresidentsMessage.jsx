@@ -20,10 +20,13 @@ const PresidentsMessage = () => {
             <div className="w-64 h-64 overflow-hidden rounded-lg shadow-md mb-4">
               <img
                 src={dr}
-                alt="Dr S Saravana Kumar"
+                alt="Dr. Shree Sowjanya Patibandla"
                 className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
                 loading="eager"
                 decoding="async"
+                fetchPriority="high"
+                width="256"
+                height="256"
               />
             </div>
 
